@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Mogul - Film Producer Simulator</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --bg-dark: #0f172a;
+            --panel: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .cinematic-title {
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 2px;
+        }
+
+        /* Gold gradient text */
+        .text-gold-gradient {
+            background: linear-gradient(to right, #FDE047, #D4AF37, #F59E0B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+        /* Screen Transitions */
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(20px);
+        }
+        .screen.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Ledger Row Animation */
+        .ledger-row {
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.4s ease-out;
+        }
+        .ledger-row.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Radio Card Styles */
+        .radio-card input[type="radio"]:checked + div {
+            border-color: var(--gold);
+            background-color: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center relative overflow-y-auto">
+
+    <!-- Background Grain Effect -->
+    <div class="fixed inset-0 pointer-events-none opacity-5 mix-blend-overlay" style="background-image: url('https://grainy-gradients.vercel.app/noise.svg'); z-index: 50;"></div>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-4xl p-6 relative z-10 w-full flex-grow flex flex-col justify-center">
+
+        <section id="screen-onboarding" class="screen active text-center py-20">
+            <h1 class="cinematic-title text-5xl md:text-7xl font-bold mb-4 text-gold-gradient">STUDIO MOGUL</h1>
+            <p class="text-xl text-gray-400 mb-12 tracking-widest uppercase text-sm">Film Producer Simulator</p>
+            
+            <div class="max-w-md mx-auto bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
+                <label for="studio-name" class="block text-sm font-semibold text-gray-300 mb-3 text-left">ESTABLISH YOUR PRODUCTION HOUSE</label>
+                <input type="text" id="studio-name" placeholder="e.g., ASPHEXX Originals" 
+                    class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 mb-6 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-all">
+                
+                <button onclick="startGame()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 uppercase tracking-wide shadow-[0_0_15px_rgba(234,179,8,0.4)]">
+                    Launch Studio
+                </button>
+            </div>
+        </section>
+
+        <section id="screen-dashboard" class="screen pb-10">
+            <!-- Header -->
+            <header class="flex justify-between items-center bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-lg mb-8 sticky top-4 z-40">
+                <div>
+                    <h2 id="dash-studio-name" class="cinematic-title text-2xl font-bold text-white">Studio Name</h2>
+                    <span class="text-xs text-gray-400 uppercase tracking-wider">Level 1: Indie Outfit</span>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-400">Total Capital</p>
+                    <p id="dash-balance" class="text-3xl font-bold text-yellow-400 font-mono">₹50.00 Cr</p>
+                </div>
+            </header>
+
+            <!-- Market Trends -->
+            <div class="bg-blue-900/30 border border-blue-500/30 p-6 rounded-2xl mb-8">
+                <h3 class="text-lg font-bold text-blue-300 mb-2 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    Q1 Market Trends
+                </h3>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    Audiences are experiencing massive CGI fatigue, pivoting towards grounded thrillers and relatable slice-of-life stories. 
+                    However, holiday windows (Late Q1) remain fiercely dominated by Mega-Studios releasing 4,000+ screen blockbusters.
+                </p>
+            </div>
+
+            <!-- Project Pitches -->
+            <h3 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Project Pitches (Greenlight a Film)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Project 1 -->
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:border-yellow-500/50 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between" onclick="selectProject('p1')">
+                    <div>
+                        <span class="inline-block px-2 py-1 bg-green-900/50 text-green-400 text-xs rounded mb-3">Low Risk</span>
+                        <h4 class="text-xl font-bold text-white group-hover:text-yellow-400 transition-colors">Mumbai Local</h4>
+                        <p class="text-sm text-gray-400 mb-4">Slice-of-Life Comedy</p>
+                        <ul class="text-xs text-gray-300 space-y-2 mb-4">
+                            <li><span class="text-gray-500">Script:</span> Flawless (+0.5)</li>
+                            <li><span class="text-gray-500">Synergy:</span> Good (+0.2)</li>
+                            <li><span class="text-gray-500">Pros:</span> Negligible financial exposure.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-400">Base Budget</span>
+                            <span class="font-mono font-bold text-white">₹6.00 Cr</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 2 -->
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:border-yellow-500/50 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between" onclick="selectProject('p2')">
+                    <div>
+                        <span class="inline-block px-2 py-1 bg-yellow-900/50 text-yellow-400 text-xs rounded mb-3">Mid Risk</span>
+                        <h4 class="text-xl font-bold text-white group-hover:text-yellow-400 transition-colors">Protocol Red</h4>
+                        <p class="text-sm text-gray-400 mb-4">Espionage Thriller</p>
+                        <ul class="text-xs text-gray-300 space-y-2 mb-4">
+                            <li><span class="text-gray-500">Script:</span> Standard (+0.2)</li>
+                            <li><span class="text-gray-500">Synergy:</span> Excellent (+0.3)</li>
+                            <li><span class="text-gray-500">Pros:</span> Great OTT ancillary potential.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-400">Base Budget</span>
+                            <span class="font-mono font-bold text-white">₹24.00 Cr</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:border-yellow-500/50 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between" onclick="selectProject('p3')">
+                    <div>
+                        <span class="inline-block px-2 py-1 bg-red-900/50 text-red-400 text-xs rounded mb-3">High Risk</span>
+                        <h4 class="text-xl font-bold text-white group-hover:text-yellow-400 transition-colors">The Lost Dynasty</h4>
+                        <p class="text-sm text-gray-400 mb-4">Historical War Epic</p>
+                        <ul class="text-xs text-gray-300 space-y-2 mb-4">
+                            <li><span class="text-gray-500">Script:</span> Rushed (-0.1)</li>
+                            <li><span class="text-gray-500">Synergy:</span> Poor (-0.2)</li>
+                            <li><span class="text-gray-500">Pros:</span> Massive opening baseline (+0.2).</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-700">
+                            <span class="text-sm text-gray-400">Base Budget</span>
+                            <span class="font-mono font-bold text-white">₹42.00 Cr</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-config" class="screen pb-24">
+            <button onclick="switchScreen('screen-dashboard')" class="text-gray-400 hover:text-white mb-6 flex items-center text-sm transition-colors">
+                &larr; Back to Dashboard
+            </button>
+            
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 mb-6">
+                <h2 id="config-title" class="cinematic-title text-3xl font-bold text-white mb-1">Project Name</h2>
+                <p id="config-genre" class="text-gray-400 text-sm mb-4">Genre</p>
+                <div class="inline-block bg-gray-900 px-4 py-2 rounded-lg border border-gray-700 font-mono text-sm">
+                    Base Production: <span id="config-base-budget" class="text-white font-bold">₹0.00 Cr</span>
+                </div>
+            </div>
+
+            <!-- Configuration Options -->
+            <div class="space-y-8">
+                <!-- Casting -->
+                <div>
+                    <h3 class="text-lg font-bold mb-3 border-b border-gray-700 pb-2">1. Casting Approach (Star Power)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="cast-options">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Marketing -->
+                <div>
+                    <h3 class="text-lg font-bold mb-3 border-b border-gray-700 pb-2">2. Marketing & P&A Scale</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="marketing-options">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Release Window -->
+                <div>
+                    <h3 class="text-lg font-bold mb-3 border-b border-gray-700 pb-2">3. Release Window (Clash Risk)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="release-options">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky Bottom Action Bar -->
+            <div class="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-700 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-50">
+                <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <p class="text-sm text-gray-400">Total Estimated Budget</p>
+                        <p id="config-total-budget" class="text-2xl font-bold text-white font-mono">₹0.00 Cr</p>
+                        <p id="budget-warning" class="text-red-500 text-xs mt-1 hidden font-semibold">Exceeds Current Balance (₹50.00 Cr)</p>
+                    </div>
+                    <button id="btn-release" onclick="releaseFilm()" class="w-full md:w-auto bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-3 px-8 rounded-lg transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed">
+                        Greenlight & Release Film
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-settlement" class="screen pb-10 flex flex-col items-center">
+            <h2 class="cinematic-title text-4xl font-bold text-white mb-2 text-center">BOX OFFICE SETTLEMENT</h2>
+            <p class="text-gray-400 mb-8 text-center uppercase tracking-widest text-sm" id="settlement-movie-title">Movie Title</p>
+
+            <div class="w-full max-w-2xl bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden shadow-2xl relative">
+                
+                <!-- Ledger Header -->
+                <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between">
+                    <span class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Item</span>
+                    <span class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Amount</span>
+                </div>
+
+                <!-- Ledger Items (Injected via JS) -->
+                <div id="ledger-container" class="p-6 space-y-4 font-mono text-sm">
+                    <!-- Dynamic Rows Go Here -->
+                </div>
+
+                <!-- Final Verdict Section -->
+                <div id="verdict-container" class="bg-gray-800 p-6 border-t border-gray-700 text-center opacity-0 transition-opacity duration-1000">
+                    <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Commercial Verdict</p>
+                    <h3 id="verdict-text" class="cinematic-title text-5xl font-bold mb-2 uppercase tracking-wide">...</h3>
+                    <p id="bom-display" class="text-gray-300 text-sm">BOM: x1.00</p>
+                </div>
+            </div>
+
+            <button id="btn-return-dash" onclick="finishQuarter()" class="mt-8 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-3 px-8 rounded-lg transition-all opacity-0 pointer-events-none uppercase tracking-wide">
+                Return to Dashboard &rarr;
+            </button>
+        </section>
+
+    </main>
+
+    <script>
+        // Game State
+        const state = {
+            studioName: "",
+            balance: 50.00,
+            currentProject: null,
+            selections: {
+                cast: 0,
+                marketing: 0,
+                release: 0
+            }
+        };
+
+        // Game Data
+        const DB = {
+            projects: {
+                p1: { name: "Mumbai Local", genre: "Slice-of-Life Comedy", budget: 6.00, script: 0.5, synergy: 0.2, baseBuzz: 0 },
+                p2: { name: "Protocol Red", genre: "Espionage Thriller", budget: 24.00, script: 0.2, synergy: 0.3, baseBuzz: 0 },
+                p3: { name: "The Lost Dynasty", genre: "Historical War Epic", budget: 42.00, script: -0.1, synergy: -0.2, baseBuzz: 0.2 }
+            },
+            casting: [
+                { id: "c1", name: "Unknowns / Theatre Cast", cost: 0.00, score: -0.15, desc: "Saves money, zero star draw." },
+                { id: "c2", name: "Rising Face / Critics' Darling", cost: 2.50, score: 0.15, desc: "Solid performance, moderate pull." },
+                { id: "c3", name: "Tier-1 Bankable Star", cost: 10.00, score: 0.45, desc: "Massive pull, huge upfront cost." }
+            ],
+            marketing: [
+                { id: "m1", name: "Minimalist / Word-of-Mouth", cost: 1.50, score: -0.2, desc: "Relies entirely on reviews." },
+                { id: "m2", name: "Targeted Digital Campaign", cost: 4.00, score: 0.0, desc: "Standard industry push." },
+                { id: "m3", name: "Aggressive Multi-City Blitz", cost: 8.00, score: 0.2, desc: "City tours, TV spots, heavy buzz." },
+                { id: "m4", name: "Omnipresent Viral Carpet-Bomb", cost: 15.00, score: 0.3, desc: "Can't escape the ads. Peak visibility." }
+            ],
+            releaseWindows: [
+                { id: "r1", name: "Early Q1 (Solo Window)", penalty: 0.0, desc: "No festival bump, zero clash." },
+                { id: "r2", name: "Mid Q1 (Valentine's)", penalty: -0.1, desc: "Clash vs 'The Painter's Muse' (Indie)." },
+                { id: "r3", name: "Late Q1 (Holi Weekend)", penalty: -0.4, desc: "Suicide vs Titan's 'Astra' 4000-screens." },
+                { id: "r4", name: "End of Q1 (Post-Holi)", penalty: -0.2, desc: "Clash vs Sovereign's 'Steel Fists'." }
+            ]
+        };
+
+        // Utility: Currency Formatting
+        function formatCr(num) {
+            return `₹${num.toFixed(2)} Cr`;
+        }
+
+        // Utility: Screen Switching
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function startGame() {
+            const input = document.getElementById('studio-name').value.trim();
+            if (!input) {
+                alert("Please enter a production house name to begin."); // Fallback, though native alert requested to avoid, simulating simple validation.
+                return; 
+            }
+            state.studioName = input;
+            updateDashboardHeader();
+            switchScreen('screen-dashboard');
+        }
+
+        function updateDashboardHeader() {
+            document.getElementById('dash-studio-name').innerText = state.studioName;
+            document.getElementById('dash-balance').innerText = formatCr(state.balance);
+            
+            // Re-hide sticky bar just in case
+            document.querySelector('.fixed.bottom-0').style.display = 'none';
+        }
+
+        function selectProject(projectId) {
+            state.currentProject = DB.projects[projectId];
+            
+            // Set defaults to index 0
+            state.selections = { cast: 0, marketing: 0, release: 0 };
+            
+            // Update Config UI
+            document.getElementById('config-title').innerText = state.currentProject.name;
+            document.getElementById('config-genre').innerText = state.currentProject.genre;
+            document.getElementById('config-base-budget').innerText = formatCr(state.currentProject.budget);
+
+            renderConfigOptions();
+            calculateTotals();
+            
+            document.querySelector('.fixed.bottom-0').style.display = 'block';
+            switchScreen('screen-config');
+        }
+
+        function renderConfigOptions() {
+            // Render Casting
+            const castHtml = DB.casting.map((item, index) => `
+                <label class="radio-card cursor-pointer relative block">
+                    <input type="radio" name="cast" value="${index}" class="peer sr-only" onchange="updateSelection('cast', ${index})" ${index === 0 ? 'checked' : ''}>
+                    <div class="h-full bg-gray-900 border border-gray-700 rounded-xl p-4 transition-all">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-white text-sm">${item.name}</span>
+                            <span class="font-mono text-yellow-400 text-sm">${formatCr(item.cost)}</span>
+                        </div>
+                        <p class="text-xs text-gray-500">${item.desc}</p>
+                    </div>
+                </label>
+            `).join('');
+            document.getElementById('cast-options').innerHTML = castHtml;
+
+            // Render Marketing
+            const mktHtml = DB.marketing.map((item, index) => `
+                <label class="radio-card cursor-pointer relative block">
+                    <input type="radio" name="marketing" value="${index}" class="peer sr-only" onchange="updateSelection('marketing', ${index})" ${index === 0 ? 'checked' : ''}>
+                    <div class="h-full bg-gray-900 border border-gray-700 rounded-xl p-4 transition-all">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-white text-sm">${item.name}</span>
+                            <span class="font-mono text-yellow-400 text-sm">${formatCr(item.cost)}</span>
+                        </div>
+                        <p class="text-xs text-gray-500">${item.desc}</p>
+                    </div>
+                </label>
+            `).join('');
+            document.getElementById('marketing-options').innerHTML = mktHtml;
+
+            // Render Release
+            const relHtml = DB.releaseWindows.map((item, index) => `
+                <label class="radio-card cursor-pointer relative block">
+                    <input type="radio" name="release" value="${index}" class="peer sr-only" onchange="updateSelection('release', ${index})" ${index === 0 ? 'checked' : ''}>
+                    <div class="h-full bg-gray-900 border border-gray-700 rounded-xl p-4 transition-all">
+                        <div class="font-bold text-white text-sm mb-2">${item.name}</div>
+                        <p class="text-xs text-gray-500">${item.desc}</p>
+                    </div>
+                </label>
+            `).join('');
+            document.getElementById('release-options').innerHTML = relHtml;
+        }
+
+        function updateSelection(category, index) {
+            state.selections[category] = index;
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            const base = state.currentProject.budget;
+            const castCost = DB.casting[state.selections.cast].cost;
+            const mktCost = DB.marketing[state.selections.marketing].cost;
+            
+            const totalBudget = base + castCost + mktCost;
+            
+            const budgetDisplay = document.getElementById('config-total-budget');
+            const warning = document.getElementById('budget-warning');
+            const btn = document.getElementById('btn-release');
+
+            budgetDisplay.innerText = formatCr(totalBudget);
+
+            if (totalBudget > state.balance) {
+                budgetDisplay.classList.remove('text-white');
+                budgetDisplay.classList.add('text-red-500');
+                warning.classList.remove('hidden');
+                btn.disabled = true;
+            } else {
+                budgetDisplay.classList.add('text-white');
+                budgetDisplay.classList.remove('text-red-500');
+                warning.classList.add('hidden');
+                btn.disabled = false;
+            }
+
+            return totalBudget; // Used by release mechanism
+        }
+
+        function releaseFilm() {
+            document.querySelector('.fixed.bottom-0').style.display = 'none';
+            switchScreen('screen-settlement');
+            document.getElementById('settlement-movie-title').innerText = state.currentProject.name;
+            
+            // Reset previous settlement UI
+            document.getElementById('ledger-container').innerHTML = '';
+            document.getElementById('verdict-container').style.opacity = '0';
+            document.getElementById('btn-return-dash').style.opacity = '0';
+            document.getElementById('btn-return-dash').style.pointerEvents = 'none';
+
+            // Extract variables
+            const proj = state.currentProject;
+            const cast = DB.casting[state.selections.cast];
+            const mkt = DB.marketing[state.selections.marketing];
+            const rel = DB.releaseWindows[state.selections.release];
+            const totalBudget = calculateTotals();
+
+            // Core Deterministic Logic
+            let BOM = 1.0 + proj.script + cast.score + proj.synergy + mkt.score + rel.penalty + proj.baseBuzz;
+            BOM = Math.max(0, BOM); // Prevent negative multiplier
+            
+            const GBO = totalBudget * BOM;
+            const NBO = GBO * 0.82; // 18% Tax deduction
+            const producerShare = NBO * 0.425;
+            const ancillary = proj.budget * 0.3; // Simple ancillary model
+            const netRevenue = producerShare + ancillary;
+            
+            let profit = netRevenue - totalBudget;
+            let corporateTax = 0;
+            if (profit > 0) {
+                corporateTax = profit * 0.25;
+            }
+            const finalNet = profit - corporateTax;
+
+            // Update Global Balance
+            state.balance += finalNet;
+
+            // Determine Verdict
+            let verdict = "";
+            let vColor = "";
+            if (BOM < 0.8) { verdict = "Disaster"; vColor = "text-red-600"; }
+            else if (BOM < 1.3) { verdict = "Flop"; vColor = "text-orange-500"; }
+            else if (BOM < 1.8) { verdict = "Hit"; vColor = "text-green-400"; }
+            else { verdict = "Blockbuster"; vColor = "text-gold-gradient"; }
+
+            // Ledger Sequence Array
+            const sequence = [
+                { label: "Total Approved Budget", amount: `-${formatCr(totalBudget)}`, color: "text-red-400" },
+                { label: "Gross Box Office (GBO)", amount: formatCr(GBO), color: "text-white" },
+                { label: "Net Box Office (NBO)", amount: formatCr(NBO), color: "text-gray-400" },
+                { label: "Producer Theatrical Share (42.5%)", amount: formatCr(producerShare), color: "text-white" },
+                { label: "Ancillary Revenue (Rights)", amount: formatCr(ancillary), color: "text-green-400" },
+                { label: "Gross Profit / Loss", amount: formatCr(profit), color: profit >= 0 ? "text-green-400" : "text-red-500" },
+                { label: "Corporate Tax (25% on Profit)", amount: `-${formatCr(corporateTax)}`, color: "text-red-400" },
+                { label: "Final Net Gain / Loss", amount: formatCr(finalNet), color: finalNet >= 0 ? "text-green-500 font-bold" : "text-red-500 font-bold", isTotal: true }
+            ];
+
+            // Render Sequence with Delays (Suspense building)
+            const ledgerEl = document.getElementById('ledger-container');
+            let delay = 500;
+
+            sequence.forEach((item, index) => {
+                setTimeout(() => {
+                    const row = document.createElement('div');
+                    row.className = `ledger-row flex justify-between items-center ${item.isTotal ? 'pt-4 mt-2 border-t border-gray-700 text-base' : ''}`;
+                    row.innerHTML = `
+                        <span class="text-gray-300">${item.label}</span>
+                        <span class="${item.color}">${item.amount}</span>
+                    `;
+                    ledgerEl.appendChild(row);
+                    
+                    // Trigger reflow to apply CSS transition
+                    void row.offsetWidth;
+                    row.classList.add('visible');
+                    
+                    // Auto-scroll ledger
+                    ledgerEl.scrollTop = ledgerEl.scrollHeight;
+
+                }, delay);
+                delay += 700; // 0.7s per line
+            });
+
+            // Reveal Final Verdict & Button
+            setTimeout(() => {
+                const vCont = document.getElementById('verdict-container');
+                const vText = document.getElementById('verdict-text');
+                const btnReturn = document.getElementById('btn-return-dash');
+                
+                vText.innerText = verdict;
+                vText.className = `cinematic-title text-5xl font-bold mb-2 uppercase tracking-wide ${vColor}`;
+                document.getElementById('bom-display').innerText = `Box Office Multiplier: x${BOM.toFixed(2)}`;
+                
+                vCont.style.opacity = '1';
+                btnReturn.style.opacity = '1';
+                btnReturn.style.pointerEvents = 'auto';
+
+            }, delay + 500);
+        }
+
+        function finishQuarter() {
+            updateDashboardHeader();
+            switchScreen('screen-dashboard');
+        }
+    </script>
+</body>
+</html>
